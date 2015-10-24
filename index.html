@@ -42,8 +42,8 @@
 			<!-- Any section element inside of this container is displayed as a slide -->
 			<div class="slides">
 				<section>
-					<h1>Java 8 - by example!</h1>
-					<h3>Patterns and practices for Lambdas, Streams, Optional...</h3>
+					<h1>Akka Streams</h1>
+					<h3>From Zero to Kafka</h3>
 					<p>
 						<small>Created by <a href="https://github.com/markglh">Mark Harrison</a> / <a href="http://twitter.com/markglh">@markglh</a></small>
 					</p>
@@ -51,44 +51,81 @@
 
 				<section>
 					<section>
-						<h2>Interface default methods</h2>
-						<ul>
-	         				<li>Interfaces can now have <code>default</code> &amp; <code>static</code> methods!</li>
-	         				<li>Allows new interface methods to be added without breaking existing implementations</li>
-	         				<li>Multiple inheritance!</li>
-	          			</ul>
-	          			<pre><code data-trim class="java">
-public interface Comparator&lt;T&gt; {
-  default Comparator&lt;T&gt; reversed() {
-        // Implementation here
-  }
-
-  public static Comparator&lt;T&gt; naturalOrder() {
-        // Implementation here
-  }
-}
-	          			</code></pre>
+						<h2>How it all began</h2>
+							<blockquote cite="http://www.reactivemanifesto.org/">
+								&ldquo;Reactive Streams is an initiative to provide a standard for asynchronous stream processing with non-blocking back pressure. This encompasses efforts aimed at runtime environments (JVM and JavaScript) as well as network protocols.&rdquo;
+							</blockquote>
 						</p>
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Loads of existing java interfaces have been updated with default and static methods</li>
-	          					<li>We'll see examples later</li>
+	          					<li>Created by engineers from Typesafe, Netflix, Redhat, and more) plus Doug Lea :)</li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Multiple Inheritance...</h2>
+						<h2>Why</h2>
 						<ul>
-	         				<li>What if a class inherits the same default method from two interfaces???
-	         				</br></br>
-	         					<ol class="fragment fade-in">
-		         					<li>Class methods always win. Whether it’s this class or the superclass, it will take priority</li>
-		         					<li>If multiple interfaces define the same method with a default implementation, then the most specific is selected (the child in inheritance terms)</li>
-		         					<li>If it’s not obvious then the compiler will cry, we need to explicitly choose: <strong>INTERFACE</strong>.super.<strong>METHODNAME</strong></li>
-		         				</ol>
-	         				</li>
+	         				<li>Efficiently processing large indeterminate streams is hard</li>
+	         				<li>Avoiding blocking is <em>essential</em> to maximise performance</li>
+	         				<li>Every stage in the stream needs to be able to <em>push</em> and <em>pull</em></li>
+	          				<li>We don't want to overload (or starve!) downstream consumers...</li>
 	          			</ul>
+
+	          			<aside class="notes">
+	          				<ul>
+	          					<li>we want to pass data across applications, nodes, CPUs, threads, actors, etc</li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
+					</section>
+
+					<section>
+	          			<img src="images/fatthincat.jpg"/>
+					</section>
+
+					<section>
+						<h2>How</h2>
+						<ul>
+	         				<li>Treat data as a stream of elements</li>
+	         				<li>Asynchronous non-blocking data and demand flows</li>
+	         				<li>Demand flows <em>upstream</em>, causing data to flow <em>downstream</em></li>
+	          				<li>Data flow is therefore restricted by demand 
+	          					<ul>
+									<li>Back Pressure!!</li>
+								</ul>	
+
+	          				</li>
+	          				<li>Demand happens on a separate flow!</li>
+	          			</ul>
+
+	          			<aside class="notes">
+	          				<ul>
+	          					<li>Demand can be in blocks (give me the next 50!!)</li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
+					</section>
+
+					<section>
+						<h2>What</h2>
+						<ul>
+							<li>The Reactive Streams specification is just that
+								<ul>
+			         				<li>A collection of interfaces methods and protocols</li>
+			         				<li>Provides example implementations and a TCK for verification</li>
+			         				<li>Aimed at providing a way to build common implementations</li>
+		         				</ul>
+		         			</li>
+	          			</ul>
+
+	          			<aside class="notes">
+	          				<ul>
+	          					<li>It's just a specification!!</li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
 					</section>
 
 				</section>
@@ -96,1212 +133,468 @@ public interface Comparator&lt;T&gt; {
 				<section>
 
 					<section>
-						<h2>Lambdas you say?</h2>
-						<ul>
-	         				<li>Basically just a shorthand method implementation</li>
-	         				<li>Concise and <em>much</em> improved replacement for Anonymous inner classes</li>
-	         				<li>Makes it easy to pass <em>behaviour</em> around</li>
-	          				<li>Pass the behaviour into the method, flips the design on its head</li>
-	          				<li>Lexically scoped (<code>this</code> is effectively shared with the surrounding method)</li>
-	          			</ul>
+						<h2>Introducing Akka Streams!!</h2>
+						<h4>Akka's implementation of Reactive Streams</h4>
 						</p>
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Lexical scoping - effectively recognises the scope of the surrounding method.</li>
-	          					<li>“this” doesn’t refer to the lambda itself (as it would have with anonymous classes).</li>
-	          					<li>lambdas can access the variables of the surrounding method (making them closures, almost)</li>
-	          					<li>One caveat here is that the variables must be effectively final, they don’t need to have the final keyword, but the compiler will verify that they aren’t re-assigned.</li>
-	          					<li>good performance, better than scala (sorry!)</li>
-	          				</ul>
-	          			</aside>
 					</section>
 
 					<section>
-						<h2>Syntax please!</h2>
-
-						<pre><code data-trim class="java">
-(int x, int y)   ->   x + y
-	          			</code></pre>
-
-	          			<p>Argument types can be inferred by the compiler:</p>
-	          			<pre><code data-trim class="java">
-(x, y)   ->   x + y
-	          			</code></pre>
-
-						<p>Zero-arg Lambdas are also possible:</p>
-	          			<pre><code data-trim class="java">
-()   ->   "Java 8!"
-	          			</code></pre>
-	          			</br>
-
-						<p>But how can we use them?</p>
-						<pre class="fragment fade-in"><code data-trim class="java">
-Consumer&lt;String&gt; inferredConsumer = 
-                    x -> System.out.println(x);
-	          			</code></pre>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Multiple arguments need to be in parentheses</li>
-	          					<li>The types can be inferred when mapping to the FunctionalInterface</li>
-	          					<li>Can wrap large Lambdas in parenthesis but you should really use method references instead</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>WAT?!?</h2>
-						<img src="images/watcat.jpg"/>
-					</section>
-
-					<section>
-						<h2>Functional Interfaces</h2>
+						<h2>Design Principles</h2>
 						<ul>
-							<li>A Functional Interface is any interface with <em>one</em> <strong>S</strong>ingle <strong>A</strong>bstract <strong>M</strong>ethod</li>
-							<li>The parameters that the Lambda accepts and returns must match the interface (including exceptions)</li>
-							<li><code>@FunctionalInterface</code> annotation is provided to highlight these interfaces, it is just a marker though, any <em>SAM</em> interface will work - the annotation simply enforces this at compile time</li>
-						</ul>
-						</ul>
-						</br></br>
-						<ul class="fragment fade-in">
-							<li>So... When we pass or assign a Lambda:
-								<ol>
-									<li>First the Lambda is converted into a Functional Interface</li>
-									<li>Secondly it is invoked via this generated implementation</li>
-								</ol>	
-							</li>
-						</ul>						
+			         		<li>Explicitness over magic (I'm looking at you Shapeless!)</li>
+			         		<li>Fully composable</li>
+			         			<ul>
+			         				<li>Each component, or set of componenents can be combined</li>
+		         				</ul>
+			         		<li>Each building block is immutable</li>
+			         		<li>Fully compatible with other Reactive Streams implementations</li>
+	          			</ul>
 
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>A @FunctionalInterface has one (non default) method. </li>
-	          					<li>Inference is used to try to match the interface to the lambda</li>
-	          					<li>The annotation is just a marker, it isn't required for it to work, any interface with just one method is considered a functional interface!</li>
-	          					<li>However, if the interface has more than one (non-default) method the annotation prevents it from compiling.</li>
-	          					<li>Fully backwards compatible.</li>
-	          					<li>A Lambda can replace any variable or parameter that expects a SAM interface</li>
-	          					<li>The java.util.function package contains lots of <code>@FunctionalInterface</code> definitions</li>
-	          					<li>Downside: Lots of different interfaces with different names (couldn’t do it like C# because of type erasure)</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Lambda Example 1 - Predicates</h2>
-						<p>Have you ever written code like this?</p>
-
-						<pre><code data-trim class="java">
-@FunctionalInterface  //Added in Java8 
-public interface Predicate&lt;T&gt; {
-	boolean test(T t); 	
-}
-
-private void printMatchingPeople(
-                List&lt;Person&gt; people, 
-                Predicate&lt;Person&gt; predicate) {
-    for (Person person : people) {
-        if (predicate.test(person)) {
-           System.out.println(person);
-        }
-    }
-}						
-						</code></pre>
+						<h2>Building blocks</h2>
+						<ul>
+			         		<li>Source</li>
+			         			<ul>
+			         				<li>Traditionally known as a producer</li>
+			         				<li>Supplies messages that will flow downstream</li>
+			         				<li>Exactly one output stream</li>
+		         				</ul>
+		         			<li>Sink</li>
+			         			<ul>
+			         				<li>Traditionally known as a consumer</li>
+			         				<li>End point of the stream, this is where messages end up</li>
+		         				</ul>
+	          			</ul>
 
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Predicate pattern, rather than hard coding the "if" statement</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Lambda Example 1 - Predicates</h2>
-
-						<p>Pre Java 8:</p>
-
-						<pre><code data-trim class="java">
-public class PersonOver50Predicate 
-                    implements Predicate&lt;Person&gt; {
-    public boolean test(Person person) {
-        return person.getAge() > 50;
-    }
-}
-
-printMatchingPeople(loadsOfPeople, 
-                    new PersonOver50Predicate());
-	          			</code></pre>
-	          			</br>
+						<h2>Building blocks cont...</h2>
+						<ul>
+			         		<li>Flow</li>
+			         			<ul>
+			         				<li>A <em>processing stage</em> in the Stream</li>
+			         				<li>Used to compose Streams</li>
+			         				<li>Exactly <em>one input</em> and <em>one output</em> stream</li>
+			         				<li>See also <code>BidirectionalFlow</code> (two in -> two out)</li>
+		         				</ul>
+	          			</ul>
 
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Need to implement a predicate for each different test</li>
+	          					<li>Between the Source and Sink</li>
+	          					<li>BidirectionalFlow is one of many - more later</li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Lambda Example 1 - Predicates</h2>
-
-						<p>Java 8:</p>
-
-						<pre><code data-trim class="java">
-printMatchingPeople(loadsOfPeople, 
-                    x -> x.getAge() > 50); 
-	          			</code></pre>
-	          			<p>Notice the signature matches that of the Predicate, the compiler automatically figures out the rest</p>
-	          			</br>
-
-	          			
-		          		<p>What if we had an existing <code>Predicate</code> we wanted to enhance?</p>
-		          		<div class="fragment fade-in">
-		          			<pre><code data-trim class="java">
-Predicate&lt;Person&gt; ageCheck = x -> x.getAge() > 50;
-printMatchingPeople(loadsOfPeople, 
-                ageCheck.and(x -> x.getIq() > 100));
-		          			</code></pre>
-		          			<p>Composite <code>Predicates</code> FTW... :-)</p>
-	          			</div>
-
+						<h2>Building blocks cont...</h2>
+						<ul>
+			         		<li>RunnableGraphs</li>
+			         			<ul>
+			         				<li>A pre-assembled set of Stream components, packaged into a Graph.</li>
+			         				<li>All exposed ports are connected (between a Source and Sink)</li>
+			         				<li>This can then be Materialized</li>
+		         				</ul>
+	          			</ul>
 
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Could pass another function in to execute on each element</li>
-	          					<li>Execute around pattern</li>
-	          					<li>Could use method references instead</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Lambda Example 2 - Runnable</h2>
-
-						<p>Pre Java 8 mess:</p>
-
-						<pre><code data-trim class="java">
-Runnable r1 = new Runnable() {
-    @Override
-    public void run() {
-         System.out.println("Meh!");
-    }
-};
-r1.run();
-	          			</code></pre>
-
-	          			</br>
-						<p>Java 8:</p>
-
-						<pre><code data-trim class="java">
-Runnable r = () -> System.out.println("Woop!");
-r.run();
-	          			</code></pre>
-					</section>
-
-					<section>
-						<h2>Lambda Example 3 - Collections</h2>
-
-						<p>Lambdas make lots of new Collection methods possible...</p>
-
-						<pre><code data-trim class="java">
-List&lt;String&gt; strings = new ArrayList&lt;&gt;();
-Collections.addAll(strings, "Java", "7", "FTW");
-	          			</code></pre>
-	          			</br>
-	          			
-	          			<div class="fragment fade-in">
-		          			<p>Do <em>something</em> on every element in the List</p>
-		          			<pre><code data-trim class="java">
-strings.forEach(x -> System.out.print(x + " ")); 
-//Prints: "Java 7 FTW"
-		          			</code></pre>
-	          			</div>
-					</section>
-
-					<section>
-						<h2>Lambda Example 4 - More Collections</h2>
-
-	          			<div>
-		          			<p>Replace every matching element in the List</p>
-		          			<pre><code data-trim class="java">
-strings.replaceAll(x -> x == "7" ? "8" : x); 
-strings.forEach(x -> System.out.print(x + " "));
-//Prints: "Java 8 FTW"
-		          			</code></pre>
-	          			</div>
-	          			</br>
-
-						<div class="fragment fade-in">
-		          			<p>Remove matching elements from the List</p>
-		          			<pre><code data-trim class="java">
-strings.removeIf(x -> x == "8");
-strings.forEach(x -> System.out.print(x + " "));
-//Prints: Java FTW
-		          			</code></pre>
-	          			</div>
+						<h2>Building blocks cont...</h2>
+						<img src="images/akka-streams-components.png"/>
 
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>This sets us up for streams later</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Lambda Example 5 - Comparators</h2>
+						<h2>Building blocks cont...</h2>
+						<ul>
+			         		<li>Composite Flows</li>
+			         			<ul>
+			         				<li>It is possible to <em>wrap</em> several components into more complex ones</li>
+			         				<li>This composition can then be treated as one block</li>
+		         				</ul>
 
-						<pre><code data-trim class="java">
-@FunctionalInterface //Added in Java8 version
-public interface Comparator&lt;T&gt; {
-    int compare(T o1, T o2);
-    //Java 8 adds loads of default methods
-}
-						</code></pre>
+		         			<li>Partial Flow Graphs</li>
+			         			<ul>
+			         				<li>An incomplete Flow (Graph)</li>
+			         				<li>Can be used to construct more complex Graphs easily</li>
+		         				</ul>
+	          			</ul>
 
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Java 8 adds loads of default comparator methods...</li>
-	          					<li>The types can be inferred when mapping to the FunctionalInterface</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Lambda Example 6 - Comparators 2</h2>
-
-						<pre><code data-trim class="java">
-List&lt;Person&gt; loadsOfPeople = ...;
-   						</code></pre>
-   						<p>Pre Java 8:</p>
-						<pre><code data-trim class="java">
-public class SortByPersonAge 
-                    implements Comparator&lt;Person&gt; {
-    public int compare(Person p1, Person p2) {
-        return p1.getAge() - p2.getAge();
-    }
-}
-Collections.sort(loadsOfPeople, 
-                 new SortByPersonAge());
-
-	          			</code></pre>
-
-	          			<div class="fragment fade-in">
-		          			<p>Java 8:</p>
-
-							<pre><code data-trim class="java">
-Collections.sort(loadsOfPeople, 
-            (p1, p2) -> p1.getAge() - p2.getAge());
-		          			</code></pre>
-	          			</div>
+						<h2>Building blocks cont...</h2>
+						<ul>
+			         		<li>Materializer</li>
+			         			<ul>
+			         				<li>Once complete, the flow is Materialized in order to start stream processing</li>
+			         				<li>Supports fully distributed stream processing
+			         					<ul>
+					         				<li>Each step must be either serializable immutable values or ActorRefs</li>
+				         				</ul>
+			         				</li>
+			         				<li>Fails immediately <em>at runtime</em> if the Graph isn't complete</li>
+		         				</ul>
+	          			</ul>
 
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Multiple arguments need to be in parenthesis</li>
-	          					<li>The types can be inferred when mapping to the FunctionalInterface</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Lambda Example 7 - Comparators 3</h2>
+						<h2>Errors vs Failures</h2>
+						<ul>
+			         		<li>Errors handlied within the stream as normal data elements
+			         			<ul>
+			         				<li>Passed using the onNext function</li>
+		         				</ul>
+		         			</li>
+		         			<li>Failure means that the stream itself has failed and is collapsing
+			         			<ul>
+			         				<li>Raises the onError signal... (???)</li>
+		         				</ul>
+		         			</li>
+		         			<li>Each block in the flow can choose to absorb or propagate the errors
+			         			<ul>
+			         				<li>Possibly resulting the the complete collapse of the flow</li>
+		         				</ul>
+		         			</li>
+	          			</ul>
 
-						<p>As usual in Java 8... the <code>Comparator</code> interface provides plenty of useful default &amp; static methods...</p>
-			
-						<pre><code data-trim class="java">
-//&quot;comparing&quot; static method simplifies creation
-Comparator&lt;Person&gt; newComparator = 
-               Comparator.comparing(e -> e.getIq());
-						</code></pre>
-						</br>
-
-						<pre class="fragment fade-in"><code data-trim class="java">
-//&quot;thenComparing&quot; combines comparators
-Collections.sort(loadsOfPeople, 
-        newComparator.thenComparing(
-            Comparator.comparing(e -> e.getAge())));
-						</code></pre>
-	          			
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>ThenComparing allows for composite Comparators</li>
+	          					<li>Supervisor strategies to manage how the stream handles failures</li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
-					</section>
-
-					<section>
-						<h2>Lambda Example 8 - Comparators 4</h2>
-
-						<p>and more...</p>
-
-						<pre><code data-trim class="java">
-//More useful Collection methods...
-loadsOfPeople4.sort(
-        Comparator.comparing(e -> e.getIq()));
-						</code></pre>
-						</br>
-
-						<pre class="fragment fade-in"><code data-trim class="java">
-//And finally... Method references
-loadsOfPeople.sort(
-        Comparator.comparing(Person::getAge));
-						</code></pre>
 					</section>
 				
 				</section>
 
-
 				<section>
 					<section>
-						<h2>Introducing Method References</h2>
+						<img src="images/showmecode.jpg"/>
+					</section>
+
+					<section>
+						<h2>First things first</h2>
+
+						<span>We need to create an <code>ActorSystem</code> and <code>Materializer</code></span>
+
+						<pre><code data-trim class="scala">
+implicit val system = ActorSystem("actors")
+implicit val materializer = ActorMaterializer()
+	          			</code></pre>
+					</section>
+
+					<section>
+						<h2>Simple Stream</h2>
+
+						<span>We need to create an <code>ActorSystem</code> and <code>Materializer</code></span>
+
+						<pre><code data-trim class="scala">
+
+Source(1 to 5)
+   .filter(_ &lt; 3) // 1, 2
+   .map(_ * 2) // 2, 4
+   .to(Sink.foreach(println))
+   .run()
+//prints 2 4
+	          			</code></pre>
+	          			<aside class="notes">
+	          				<ul>
+	          					<li>The fixed source produces Int's from 1 to 5</li>
+	          					<li>Filters, maps then passes them to a Sink which prints the results.</li>
+	          				</ul>
+	          			</aside>
+					</section>
+
+					<section>
+						<h2>Composing elements together</h2>
+
+						<span>We can combine multiple components together</span>
+
+						<pre><code data-trim class="scala">
+Composing elements together
+val nestedSource = Source(1 to 5)
+					.map(_ * 2)
+
+val nestedFlow = Flow[Int]
+					.filter(_ &lt;= 4)
+					.map(_ + 2)
+
+val sink = Sink.foreach(println)
+
+//link up the Flow to a Sink
+val nestedSink = nestedFlow.to(Sink.foreach(println))
+// Create a RunnableGraph - and run it! Prints 4 6
+nestedSource.to(nestedSink).run()
+	          			</code></pre>
+	          			<aside class="notes">
+	          				<ul>
+	          					<li>Really useful when building complex streams</li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
+					</section>
+
+					<section>
+						<h2>Composing elements together cont...</h2>
+
+						<span>Alternatively we could do this, linking them in one step</span>
+
+						<pre><code data-trim class="scala">
+nestedSource
+	.via(nestedFlow)
+	.to(Sink.foreach(println(_)))
+	          			</code></pre>
+	          			<aside class="notes">
+	          				<ul>
+	          					<li>via used to link up flows (processing stages)</li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
+					</section>
+
+					<section>
+						<h2>Composing elements together cont...</h2>
+	          			<img src="images/compositeflow.jpg"/>
+					</section>
+
+					<section>
+						<h2>Graph Processing Stages</h2>
 						<ul>
-							<li>Any method can be automatically “lifted” into a function. It must simply meet contract of the FunctionalInterface</li>
-	          				<li>Can be easier to debug &amp; test than Lambdas, more descriptive stack traces</li>
-	          				<li>Promotes re-use, keeping code <em>DRY</em></li>
-	          				<li>Uses the &quot;<em>::</em>&quot; syntax</li>
+			         		<li>Fan Out
+			         			<ul>
+			         				<li><code>Broadcast[T]</code> – (1 input, N outputs)</li>
+			         				<li><code>Balance[T]</code> – (1 input, N outputs)</li>
+			         				<li>...</li>
+		         				</ul>
+		         			</li>
+		         			<li>Fan In
+			         			<ul>
+			         				<li><code>Merge[In]</code> – (N inputs , 1 output)</li>
+			         				<li>...</li>
+		         				</ul>
+		         			</li>
+		         			<li>Timer Driven
+			         			<ul>
+			         				<li><code>groupedWithin(Int, Duration)</code>
+			         					<ul>
+			         						<li>
+			         							Groups elements when either the number <em>or</em> duration is reached (whichever is first). Very useful for batching messages.
+			         						</li>
+			         					</ul>
+			         				</li>
+		         				</ul>
+		         			</li>
+		         			<li><a target="#" href="http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/stages-overview.html">See the Akka Stream docs for more!</a></li>
 	          			</ul>
-						
+
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Decision needs to be made on a case by case basis</li>
-	          					<li>Generally method references are more readable and certainly more re-usable</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Method References Types</h2>
-	          			<table>
-							<thead>
-								<tr>
-									<th>Reference to...</th>
-									<th>Example</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-								 	<td>a static method</td>
-								 	<td><code class="java">Class::staticMethodName</code></td> 
-								</tr>
-								<tr>
-									<td>an instance method of a <strong>specific</strong> object</td>
-									<td><code class="java">object::instanceMethodName</code></td> 
-								</tr>
-								<tr>
-									<td>an instance method of an <strong>arbitrary</strong> object</td>
-									<td><code class="java">Class::methodName</code></td> 
-								</tr>
-								<tr>
-									<td>a constructor</td>
-									<td><code class="java">ClassName::new</code></td> 
-								</tr>
-							</tbody>
-						</table>
+						<h2>Graph Processing Stages cont...</h2>
+	          			<img src="images/compose_shapes1.jpg"/>
 					</section>
 
-					<section>
-						<h2>Reference to a static method</h2>
-						<p>A simple reference to a static method</p>
-						<pre><code data-trim class="java">
-//isPersonOver50 is a static method
-printMatchingPeople(loadsOfPeople, 
-                  PersonPredicates::isPersonOver50);
-						</code></pre>
-	          			</br>
-
-	          			<p>This is equivalent to</p>
-	          			<pre><code data-trim class="java">
-printMatchingPeople(loadsOfPeople, 
-                    x -> x.getAge() > 50);
-						</code></pre>
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>...</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Reference to an instance method of a specific object</h2>
-						<p>A reference to a method on an object instance</p>
-						<pre><code data-trim class="java">
-List&lt;String&gt; strings = ...
-//print is a method on the "out" PrintStream object
-strings.forEach(System.out::print);
-						</code></pre>
-	          			</br>
-
-	          			<p>This is equivalent to</p>
-	          			<pre><code data-trim class="java">
-strings.forEach(x -> System.out.print(x));
-						</code></pre>
-						
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Useful for saving a few characters but not the most widely used type</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Reference to an instance method of an arbitrary object</h2>
-						<p>Examine this simplified definition of a map function</p>
-						<pre><code data-trim class="java">
-public interface Function&lt;T,R&gt; {
-	public R apply(T t);
-}
-
-public &lt;T, R&gt; List&lt;R&gt; map(Function&lt;T, R&gt; function, 
-                          List&lt;T&gt; source) {
-    /* applies the function to each element, 
-       converting it from T to R */
-}
-						</code></pre>
-					</section>
-
-					<section>
-						<h2>Reference to an instance method of an arbitrary object cont...</h2>
-						<p>Although it looks like we're referencing a Class method, we're invoking an instance method on the object(s) passed in the call</p>
-						</br>
-
-						<pre><code data-trim class="java">
-List&lt;Person&gt; loadsOfPeople = ...
-List&lt;Integer&gt; namesOfPeople = 
-                map(Person::getAge, loadsOfPeople);
-						</code></pre>
-	          			</br>
-
-	          			<p>This is equivalent to</p>
-	          			<pre><code data-trim class="java">
-map(person -> person.getAge(), loadsOfPeople);
-						</code></pre>
-						
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Notice the Person object we're using for the reference looks like a class. The compiler uses the reference to invoke the method on each object in the list</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-
-					<section>
-						<h2>Reference to a constructor</h2>
-						<p>Uses the constructor to create new objects, the constructor signature must match that of the <code>@FunctionalInterface</code></p>
-						<pre><code data-trim class="java">
-List&lt;String&gt; digits = Arrays.asList("1", "2", "3");
-						</code></pre>
-						<pre><code data-trim class="java">
-//Transforms a String into a new Integer
-List&lt;Integer&gt; numbers = map(Integer::new, digits);
-						</code></pre>
-	          			</br>
-
-	          			<p>This is equivalent to</p>
-	          			<pre><code data-trim class="java">
-map(s -> new Integer(s), digits);
-						</code></pre>
-						
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Anytime you're simply creating a new object you may be able to swap the lambda for a constructor method reference</li>
-	          				</ul>
-	          			</aside>
-					</section>
 				</section>
 
 				<section>
-				    <section>
-						<h2>What's wrong with Collections</h2>
+
+					<section>
+						<h2>The Graph DSL</h2>
 						<ul>
-							<li>Every application uses Collections, however Collections are difficult to query and aggregate, requiring several levels of iteration and conditionals, basically it’s messy and painful</li>
-							<li>Writing multi-threaded code to do this manually is difficult to write and maintain</li>
-						</ul>
+			         		<li>Whenever you want to perform multiple operations to control the Flow of a Graph, manually constructing them as above can become very clumbersome and tedius, not to mentioned hard to maintain.</li>
+		         			<li>For this reason the Akka team have written a DSL to help write complex Graphs.</li>
+	          			</ul>
 
-						</br></br>
-						<div class="fragment fade-in">
-							<p>Imagine writing this manually</p>
-							<pre><code data-trim class="java">
-Stream&lt;String&gt; words=Stream.of("Java", "8", "FTW");
-Map&lt;String, Long&gt; letterToNumberOfOccurrences =
-    words.map(w -> w.split(""))
-            .flatMap(Arrays::stream)
-            .collect(Collectors.groupingBy(
-                            Function.identity(), 
-                            Collectors.counting()));
-//Prints: //{a=2, T=1, F=1, v=1, W=1, 8=1, J=1}
-							</code></pre>
-						</div>
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>What we want is to execute a SQL like query on the collection to return a useful set of data</li>
+	          					<li>DSL is Scala only</li>
+	          					<li>Makes visualising graphs in the code much easier!!</li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Introducing Streams!</h2>
-						<ul>
-							<li>A <code>Stream</code> is a conceptually fixed data structure in which elements are computed on demand</li>
-							<li>Streams iterate internally, you don’t have to worry about handling the iteration</li>
-							<li>Pipelining: Akin to the “pipe” command in unix, allowing aggregations to be chained together</li>
-							<li>Automatic optimisation: <em>short-circuiting</em> and <em>lazy</em> processing</li>
-							<li>Can be infinite</li>
-							<li>Can be executed in parallel automatically using <code>parallelStream</code> or <code>parallel()</code></li>
-						</ul>
+						<h2>The Graph DSL</h2>
+						<pre><code data-trim class="scala">
+val g = FlowGraph.closed() { 
+ implicit builder: FlowGraph.Builder[Unit] =>
+   //This provides the DSL
+   import FlowGraph.Implicits._ 
+   val in = Source(1 to 3)
+   val out = Sink.foreach(println)
+
+   //2 outputs, 2 inputs
+   val bcast = builder.add(Broadcast[Int](2)) 
+   val merge = builder.add(Merge[Int](2)) 
+   val f1, f2, f3, f4 = Flow[Int].map(_ + 10)
+
+   in ~> f1 ~> bcast ~> f2 ~> merge ~> f3 ~> out
+               bcast ~> f4 ~> merge
+}
+g.run() //Prints 31 31 32 32 33 33
+	          			</code></pre>
+
 	          			<aside class="notes">
 	          				<ul>
-	          					<li>Similar to LINQ</li>
-	          					<li>Streams are wrappers around data sources</li>
-	          					<li>Different to a List, which is an in memory data structure: every element computed when added</li>
-								<li>Short circuiting: ends processing immediately</li>
-								<li>Loop fusion: merges operations into one pass</li>
-								<li>Lazy processing waits unti la terminal command, then optimises intermediate steps</li>
-								<li>Data from various sources (Collections, Arrays, IO)</li>
-								<li>Don't modify the original list</li>
+	          					<li>closed() ensures we end up with a complete graph (can also use partial instead...</li>
+	          					<li>Makes visualising graphs in the code much easier!!</li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>More Streams...</h2>
-						
-						<ul>
-							<p>Can be created from multiple sources:</p>
-							<li><code>Arrays.stream(...)</code>, <code>Stream.of(1, 2, 3, 4)</code>, <code>Stream.iterate(...)</code>, <code>Stream.range(...)</code>, <code>Random.ints()</code>, <code>Files.lines(...)</code>...</li>
-						
-						</br>
-						<div class="fragment fade-in">
-							<p>Two types of operations:</p>
-							<li><strong>Intermediate (aggregation):</strong> filter, map, flatMap, sorted ... </li>
-							<li><strong>Terminal:</strong> collect, reduce, forEach, findAny ...</li>
-						</div>
-
-						</br>
-
-						<div class="fragment fade-in">
-							<p>Specialised Streams:</p>
-							<li>IntStream, LongStream and DoubleStream: better performance for those unboxed types</li>
-						</div>
-
-						</ul>						
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Nothing happens until a terminal operation is called (lazy)</li>
-								<li>The aggregation operations are then invoked as efficiently as possible</li>
-								<li>Annoyances casting between typed streams: Steam<Int> and IntSteam</Int>
-								<li>Be careful with boxing!!! Iterate not as efficient with parallel as rangeClosed (fixed number of results so can split ahead of time)</li>
-	          				</ul>
-	          			</aside>
+						<h2>The Graph DSL cont...</h2>
+	          			<img src="images/dsl1.png"/>
 					</section>
 
-					<section>
-						<h2>map</h2>
-
-						<pre><code data-trim class="java">
-public &lt;R&gt; Stream&lt;R&gt; map(Function&lt;T, R&gt; mapper);
-						</code></pre>
-
-						</br>
-
-						<p>The <code>mapper</code> Function converts each element from <code>T</code> to <code>R</code>. The result is then added, as is, to the <code>Stream</code></p>					
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Slightly simplified definition (removed crazy generics)</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>flatMap</h2>
-
-						<pre><code data-trim class="java">
-public &lt;R&gt; Stream&lt;R&gt; flatMap(Function&lt;T, 
-                             Stream&lt;R&gt;&gt; mapper);
-						</code></pre>
-
-						</br>
-
-						<ul>
-							<li>The <code>mapper</code> Function converts each element from <code>T</code> to a <strong><code>Stream</code></strong> of <code>R</code></li>
-							<li>This is the key difference to <code>map</code>, the function itself returns a <code>Stream</code> rather than one element</li>		
-							<li>This <code>Stream</code> is then <em>flattened</em> (merged) into the main <code>Stream</code></li>	
-						</ul>
-						</br></br>
-
-						<p class="fragment fade-in">To put it another way: flatMap lets you replace each value of a Stream with another Stream, and then it concatenates all the generated streams into one single stream</p>	
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Slightly simplified definition (removed crazy generics)</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>reduce</h2>
-
-						<pre><code data-trim class="java">
-public T reduce(T identity, 
-                BinaryOperator&lt;T&gt; accumulator);
-
-public Optional&lt;T&gt; reduce(
-                BinaryOperator&lt;T&gt; accumulator);
-
-//This is the function contained in BinaryOperator
-R apply(T t, U u);
-						</code></pre>
-
-						<ul>
-							<li>Terminal Operation</li>
-							<li>Takes a <code>Stream</code> of values and repeatedly applies the accumulator to reduce them into a single value</li>
-							<li>The accumulator is passed the total so far (<code>T</code>) and the current element (<code>U</code>)</li>
-							<li>If passed, <code>identity</code> provides the initial value, rather than the first element</li>
-						</ul>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Normally used on combination with map</li>
-	          					<li>More on optional later</li>
-	          					<li>count, min, max, average</li>
-	          					<li>Could use collectors for a lot of reduce aggregations, such as “summing”, or “counting” to count elements</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>reduce continued...</h2>
-
-						<pre><code data-trim class="java">
-int totalAgeUsingReduce = loadsOfPeople.stream()
-  .map(Person::getAge) //contains 5, 10, 15
-  .reduce(0, (total, current) -> total + current);
-						</code></pre>
-
-						<ol>
-							<li class="fragment fade-in">First we map the <code>Person</code> to the age <code>int</code></li>
-							<li class="fragment fade-in">reduce then starts at <code>0</code>, and adds the current element, <code>5</code></li>
-							<li class="fragment fade-in">reduce continues by adding the current total <code>5</code>, to the next element, <code>10</code></li>
-							<li class="fragment fade-in">finally reduce adds the current total <code>15</code>, to the next element <code>15</code></li>
-							<li class="fragment fade-in">Tada, we've added up all the ages: <code>30!</code></li>
-						</o l>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>That's just the tip of the iceburg</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>collectors</h2>
-
-						<p>The collect method is a terminal operation which takes various &quot;recipes&quot;, called <code>Collectors</code> for accumulating the elements of a stream into a summary result, or converting to a specific type (such as a <code>List</code>)</p>
-
-						<pre><code data-trim class="java">
-List&lt;String&gt; listOfStrings = loadsOfPeople.stream()
-             .map(x -> x.getName())
-             .collect(Collectors.toList());
-						</code></pre>
-
-						<ul class="fragment fade-in">
-							<li>The argument passed to collect is an object of type java .util.stream.Collector</li>
-							<li>It describes how to accumulate the elements of a stream into a final result</li>
-							<li>Can be used for <code>Grouping</code>, <code>Partitioning</code>, <code>Averaging</code>, ...</li>
-						</ul>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Plenty of examples soon</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-
-					<section>
-						<h2>Streams Example 1</h2>
-
-						<pre><code data-trim class="java">
-List&lt;Integer&gt; numbers = Arrays.asList(1, 2 ... 8);
-List&lt;Integer&gt; twoEvenSquares = numbers.stream()
-    .filter(n -> n % 2 == 0) //Filter odd numbers
-    .map(n -> n * n) ////Multiply by itself
-    .limit(2)//Limit to two results
-    .collect(Collectors.toList()); //Finish!
-						</code></pre>
-
-<p>Imagine a <code>println</code> in each step...</p>
-						<pre class="fragment fade-in"><code data-trim class="java">
-filtering 1
-						</code></pre>
-						<pre class="fragment fade-in"><code data-trim class="java">
-filtering 2
-						</code></pre>
-						<pre class="fragment fade-in"><code data-trim class="java">
-mapping 2
-						</code></pre>
-						<pre class="fragment fade-in"><code data-trim class="java">
-filtering 3
-						</code></pre>
-						<pre class="fragment fade-in"><code data-trim class="java">
-filtering 4
-						</code></pre>
-						<pre class="fragment fade-in"><code data-trim class="java">
-mapping 4
-						</code></pre>
-						<pre class="fragment fade-in"><code data-trim class="java">
-twoEvenSquares = List[4, 16]
-						</code></pre>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>Notice we finish processing as soon as we have two results (short-circuiting)</li>
-	          					<li>the filtering and mapping methods are merged together (made possible by lazy evaluation) </li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 2</h2>
-
-						<pre><code data-trim class="java">
-List&lt;String&gt; youngerPeopleSortedByIq =
-    loadsOfPeople.stream()
-        .filter(x -> x.getAge() &lt; 50)
-        .sorted(Comparator
-              .comparing(Person::getIq).reversed())
-        .map(Person::getName)
-        .collect(Collectors.toList());
-						</code></pre>
-
-						<ol>
-							<li>Filter out all people older than 50</li>
-							<li>Inverse sort the remaining people by IQ</li>
-							<li>map each person to their name (convert to a Stream&lt;String&gt;)</li>
-							<li>Convert the result to a <code>List</code></li>
-						</ol>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 3 - sum</h2>
-
-						<pre><code data-trim class="java">
-int combinedAge = 
-    loadsOfPeople.stream()
-      .mapToInt(Person::getAge) //returns IntStream
-      .sum(); //this HAS to be a specialised Stream
-						</code></pre>
-
-						<ol>
-							<li>map each person to their age, producing an <code>IntStream</code></li>
-							<li>sum the results, also supports <code>average</code></li>
-						</ol>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 4 - map, reduce</h2>
-
-						<pre><code data-trim class="java">
-String xml = 
-  "&lt;people&gt;" +
-  loadsOfPeople.stream()
-    .map(x -&gt; "&lt;person&gt;"+ x.getName() +"&lt;/person&gt;")
-    .reduce("", String::concat) //start with "" 
-  + "&lt;/people&gt;";
-						</code></pre>
-
-						<p>map each <code>Person</code> to an XML element (&lt;person&gt;Steve&lt;/person&gt;), then use String.concat to <code>reduce</code> the <code>Stream</code> into one XML <code>String</code></p>
-
-						<pre class="fragment fade-in"><code data-trim class="java">
-&lt;people&gt;
-	&lt;person&gt;Dave&lt;/person&gt;
-	&lt;person&gt;Helen&lt;/person&gt;
-	&lt;person&gt;Laura&lt;/person&gt;
-	&lt;person&gt;Ben&lt;/person&gt;
-&lt;/people&gt;
-						</code></pre>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 5 - map</h2>
-
-						<pre><code data-trim class="java">
-List&lt;Stream&lt;Person&gt;&gt; clonedPeople = 
- loadsOfPeople.stream()
-   .map(person -> Stream.of(person, person.dolly()))
-   .collect(Collectors.toList());
-						</code></pre>
-
-						<ol class="fragment fade-in">
-							<li>map creates a new Stream containing two people</li>
-							<li>This <code>Stream</code>  is then added to the main Stream as-is, leaving us with a pretty useless: <code>List&lt;Stream&lt;Person&gt;&gt;</code></li>
-						</ol>
-						<img class="fragment fade-in" src="images/Meh-Grumpy-Cat.jpg"/>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 6 - flatMap</h2>
-
-						<pre><code data-trim class="java">
-List&lt;Person&gt; clonedPeople2 = loadsOfPeople.stream()
-    .flatMap(person -> Stream.of(person, 
-                                 person.dolly()))
-    .collect(Collectors.toList());
-						</code></pre>
-
-						<ol>
-							<li>flatMap combines each element from the new <code>Streams</code> into one <code>Stream&lt;Person&gt;</code></li>
-							<li>So now we've got what we wanted in the first place, a <code>List&lt;Person&gt;</code></code></li>
-						</ol>
-						<div class="fragment fade-in">							
-							<img  src="images/woojesus.jpeg"/>
-							<p>Sweeet!</p>
-						</div>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 7 - Reduce</h2>
-
-						<pre><code data-trim class="java">
-int totalAgeUsingReduce = loadsOfPeople.stream()
-    .map(Person::getAge)
-    .reduce((total, current) -> total + current)
-    .get(); //get the result from the Optional
-						</code></pre>
-
-						<ul>
-							<li>This is the same as the previous example, the difference being we don't specify a default value for reduce</li>
-							<li>Not specifying a default value means the result is <code>Optional</code>... if the <code>Stream</code> is empty then so is the result!</li>
-						</ul>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 8 - Grouping</h2>
-
-						<pre><code data-trim class="java">
-Map&lt;Integer, List&lt;Person&gt;&gt; peopleGroupedByAge =
-  loadsOfPeople.stream()
-    .filter(x -> x.getIq() > 110)
-    .collect(Collectors.groupingBy(Person::getAge));
-						</code></pre>
-
-						<ul>
-							<li>The collect method groups the filtered results by age, producing a Map&lt;age, &lt;Person&gt;&gt;</li>
-						</ul>
-
-						<pre class="fragment fade-in"><code data-trim class="java">
-{52=[Person{... age=52, iq=113, gender=MALE}],
- 60=[Person{... age=60, iq=120, gender=FEMALE}],
- 28=[Person{... age=28, iq=190, gender=MALE}]}
-						</code></pre>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 9 - Partitioning</h2>
-
-						<pre><code data-trim class="java">
-Map&lt;Boolean, List&lt;Person&gt;&gt; peoplePartitionedByAge = 
- loadsOfPeople.stream().filter(x -> x.getIq() > 110)
-   .collect(Collectors
-             .partitioningBy(x -> x.getAge() > 55));
-						</code></pre>
-
-						<ul>
-							<li>The collect method partitions the filtered results by age</li>
-							<li>The <code>Map</code> will have two entries, true and false, according to the <code>Predicate</code></li>
-						</ul>
-
-						<pre class="fragment fade-in"><code data-trim class="java">
-{false=[Person{... age=28, iq=190, gender=MALE}],
- true=[Person{... age=60, iq=120, gender=FEMALE}]}
-						</code></pre>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 10 - Multiple Groups</h2>
-
-						<pre><code data-trim class="java">
-Map&lt;Integer, Double&gt; peopleGroupedBySexAndAvgAge = 
-  loadsOfPeople.stream()
-    .filter(x -> x.getIq() > 110)
-    .collect(
-        Collectors.groupingBy(Person::getAge,
-           Collectors.averagingInt(Person::getIq)));
-						</code></pre>
-
-						<ul>
-							<li>We can group by multiple <code>Collectors</code></li>
-							<li>Here we group by age and the average IQ of that group</li>
-						</ul>
-
-						<pre class="fragment fade-in"><code data-trim class="java">
-{52=113.0, 60=117.5, 28=190.0}
-						</code></pre>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 11 - findAny</h2>
-
-						<pre><code data-trim class="java">
-loadsOfPeople.stream()
-    .filter(t -> t.getGender() == Person.Sex.FEMALE)
-    .findAny()
-    .ifPresent(System.out::println);
-						</code></pre>
-
-						<ul>
-							<li><code>findAny</code> either returns an element or nothing, hence we get an Optional</li>
-							<li><code>ifPresent</code> executes the Lambda if we get a result</li>
-						</ul>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<h2>Streams Example 12 - Parallel</h2>
-						<p>Lets iterate over 10,000,000 elements!</p>
-						</br>
-
-						<pre><code data-trim class="java">
-x -> Stream.iterate(1L, i -> i + 1)
-        .limit(x)
-        .reduce(Long::sum).get();
-						</code></pre>
-						<p>Executes in 80ms - we incur a penalty here because the <code>long</code> is repeatedly boxed and unboxed</p>
-
-						<div class="fragment fade-in">
-							<pre><code data-trim class="java">
-x -> Stream.iterate(1L, i -> i + 1)
-        .parallel().limit(x)
-        .reduce(Long::sum).get();
-							</code></pre>
-							<p>Executes in 211ms?! It turns out parallel isn't always a free win!</p>
-						</div>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>This proves just tagging parallel on the stream isn't always a win!</li>
-								<li>Parallel works much better on fixed lists, not dynamic ones</li>
-	          				</ul>
-	          			</aside>
-					</section>
-
-					<section>
-						<img src="images/jackiechanwtf.jpeg"/>
-					</section>
-
-					<section>
-						<h2>Streams Example 13 - Parallel Win!</h2>
-
-						<pre><code data-trim class="java">
-x -> LongStream.rangeClosed(1L, x)
-        .reduce(Long::sum).getAsLong();
-						</code></pre>
-						<p>Executes in 24ms - much better using an unboxed <code>Stream</code></p>
-
-						<div class="fragment fade-in">
-							<pre><code data-trim class="java">
-x -> LongStream.rangeClosed(1L, x)
-        .parallel()
-        .reduce(Long::sum).getAsLong();
-							</code></pre>
-							<p>Executes in 7ms - now that the <code>Stream</code> isn't dynamic, parallel works much better!</p>
-						</div>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li>This proves just tagging parallel on the stream isn't always a win!</li>
-								<li>Parallel works much better on fixed lists, not dynamic ones</li>
-	          				</ul>
-	          			</aside>
-					</section>
 				</section>
 
 				<section>
+
 					<section>
-						<h2>Optional</h2>
-
+						<h2>Example - Reactive Kafka</h2>
 						<ul>
-							<li>Use <code>Optional</code> instead of passing null around, helps prevent <code>NullPointerExceptions</code></li>
-							<li><code>Optional</code> is a container that’s either empty or present, in which case it contains a value</li>
-							<li>So anytime that you’re thinking of return or accepting a <code>null</code> value in a method, use <code>Optional</code> instead!</li>
+			         		<li>The guys at SoftwareMill have implemented a wrapper for Apache Kafka
+			         			<ul>
+				         			<li><a target="#" href="https://github.com/softwaremill/reactive-kafka">
+				         				https://github.com/softwaremill/reactive-kafka</a></li>
+				         		</ul>
+		         			</li>
+		         			<li>Tried and tested by yours truly</li>
 	          			</ul>
-	          			<pre class="fragment fade-in"><code data-trim class="java">
-public class Computer {
-    private Optional&lt;Mainboard&gt; mainboard;
-}
-public class Mainboard {
-    private Optional&lt;Cpu&gt; cpu;
-}
-public class Cpu {
-    private String type;
-}
 
-						</code></pre>
-
-						<aside class="notes">
+	          			<aside class="notes">
 	          				<ul>
-	          					<li>We'll always have nulls because of the JVM, but use Optional instead of deliberately using them!</li>
-	          					<li>Not serializable so be aware of that when using it in the domain or DAOs</li>
+	          					<li></li>
+	          					<li></li>
 	          				</ul>
 	          			</aside>
 					</section>
 
 					<section>
-						<h2>Using Optional</h2>
+						<h2>Example - Reactive Kafka cont...</h2>
+						<ul>
+			         		<li>Source is a Kafka Producer</li>
+		         			<li>Sink is a Kafka Consumer</li>
+	          			</ul>
+	          									<pre><code data-trim class="scala">
+val kafka = new ReactiveKafka()
+val publisher: Publisher[StringKafkaMessage] = 
+   kafka.consume(
+      ConsumerProperties(...)
+   )
 
-						<p>Several ways to create an <code>Optional</code>:</p>
-						<pre><code data-trim class="java">
-Optional.of(cpu); //Throws an NPE if cpu is null
-Optional.ofNullable(cpu); //empty if cpu is null
-						</code></pre>
+val subscriber: Subscriber[String] = 
+   kafka.publish(
+      ProducerProperties(...)
+   )
 
-						<div class="fragment fade-in">
-							<p>Getting the contents from the <code>Optional</code>:</p>
-							<pre><code data-trim class="java">
-cpu.get(); //get CPU or throw NoSuchElementException
-cpu.orElse(new Cpu()); //safe get, provides default
-							</code></pre>
-						</div>
+Source(publisher).map(_.message().toUpperCase)
+   .to(Sink(subscriber)).run()
+	          			</code></pre>
 
-						<div class="fragment fade-in">
-							<p>And more...</p>
-							<pre><code data-trim class="java">
-cpu.isPresent(); //true if present, false if empty
-cpu.ifPresent(x -> System.out.println(x.getType()));
-							</code></pre>
-						</div>
-						</br>
-
-						<p class="fragment fade-in">Also supports map, flatMap and filter!
+	          			<aside class="notes">
+	          				<ul>
+	          					<li></li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
 					</section>
 
 					<section>
-						<h2>Optional Example 1 - basics</h2>
-
-						<pre><code data-trim class="java">
-if (mainboard.isPresent() &amp;&amp; 
-      mainboard.get().getCpu().isPresent()) {
-          mainboard.get().getCpu().get().getType();
-}
-						</code></pre>
-						<p>Eww! Lets try something else!</p>
-
-						<div class="fragment fade-in">
-							<pre><code data-trim class="java">
-Optional&lt;String&gt; cpuType = 
-  mainboard.map(Mainboard::getCpu)
-    .map(Cpu::getType); //Optional&lt;Optional&lt;Cpu&gt;&gt;
-							</code></pre>
-							<p>***Fails to compile, calling <code>getType</code> on an <code>Optional</code>... if only we could flatten it???</p>
-						</div>
+						<h2>A real world example</h2>
+	          			<img src="images/reactiveKafkaStream.png"/>
 					</section>
 
 					<section>
-						<h2>Optional Example 2 - flatMap</h2>
+						<h2>A real world example cont...</h2>
+	          			<pre><code data-trim class="scala">
+FlowGraph.closed() { 
+   implicit builder: FlowGraph.Builder[Unit] =>
+   import FlowGraph.Implicits._
+   val in = Source(kafkaConsumer)
+   val out = Sink.foreach(println)
 
-						<pre><code data-trim class="java">
-Optional&lt;String&gt; stringOptional = mainboard
-    .flatMap(Mainboard::getCpu)
-    .map(Cpu::getType);
-						</code></pre>
+   val bcast = builder
+      .add(Broadcast[StringKafkaMessage](2))
+   val merge = builder
+      .add(Merge[StringKafkaMessage](2))
+   val parser1, parser2 = Flow[StringKafkaMessage]
+      .map(...)
+   val group = Flow[StringKafkaMessage].grouped(4)
 
-						<p>Lets take this further and safely get cpu type of a <code>Computer</code>!</p>
+   in ~> bcast ~> parser1 ~> merge ~> group ~> out
+         bcast ~> parser2 ~> merge
+}.run()
+	          			</code></pre>
 
-						<div class="fragment fade-in">
-							<pre><code data-trim class="java">
-Computer computer = new Computer(mainboard);
-  String cpu = computer.getMainboard()
-    .flatMap(Mainboard::getCpu)
-    .map(Cpu::getType) 
-    .filter(x -> "Intel".equals(x))
-    .orElse("Nothing we're interested in!");
-							</code></pre>
-						</div>
+	          			<aside class="notes">
+	          				<ul>
+	          					<li></li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
 					</section>
-
 				</section>
 
 				<section>
 					<h2>It's been emotional...</h2>
 			        <ul>
-			        	<li>Slides at <a href="http://markglh.github.io/Java8Madlab-Slides">markglh.github.io/Java8Madlab-Slides</a></li>
-			         	<li>Source at <a href="https://github.com/markglh/Java8Madlab-Examples">github.com/markglh/Java8Madlab-Examples</a></li>
+			        	<li>Slides at <a href="http://markglh.github.io/AkkaStreams-Madlab-Slides">markglh.github.io/Java8Madlab-Slides</a></li>
 			         	<li>Follow me <a href="https://twitter.com/markglh">@markglh</a></li>
 			        </ul>
 			        </br></br>
 			        <img class="fragment fade-in" src="images/ned-questions.jpg"/>
 				</section>
-				<section>
-					<h2>Recommended Reading</h2>
-			        <ul>
-			        	<li><a href="http://www.oracle.com/technetwork/articles/java/architect-lambdas-part1-2080972.html">Lambdas Part 1 (Ted Neward)</a></li>
-			         	<li><a href="http://www.oracle.com/technetwork/articles/java/architect-lambdas-part2-2081439.html">Lambdas Part 2 (Ted Neward)</a></li>
-			         	<li><a href="http://java.dzone.com/articles/java-lambda-expressions-vs ">Lambda Expressions vs Method References (Edwin Dalorzo)</a></li>
-			         	<li><a href="https://www.youtube.com/watch?v=OjBs13xEa2I">Youtube: Java 8 - more readable and flexible code (Raoul-Gabriel Urma)</a></li>
-			         	<li><a href="http://www.youtube.com/watch?v=8pDm_kH4YKY">Youtube: Lambda Expressions &amp; Streams (Adib Saikali)</a></li>
-			         	<li><a href="http://www.oracle.com/technetwork/articles/java/ma14-java-se-8-streams-2177646.html">Java 8 Streams Part 1 (Raoul-Gabriel Urma)</a></li>
-			         	<li><a href="http://www.oracle.com/technetwork/articles/java/architect-streams-pt2-2227132.html">Java 8 Streams Part 2 (Raoul-Gabriel Urma)</a></li>
-			         	<li><a href="http://www.oracle.com/technetwork/articles/java/java8-optional-2175753.html">Optional - No more NPE's (Raoul-Gabriel Urma)</a></li>
-			        </ul>
-				</section>
-
 			</div>
 
 		</div>

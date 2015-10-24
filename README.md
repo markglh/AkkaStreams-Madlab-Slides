@@ -1,5 +1,5 @@
-Java8Presentation-Slides
-========================
+AkkaStreams Presentation Slides
+===============================
 
 Presentation on Akka Streams
 

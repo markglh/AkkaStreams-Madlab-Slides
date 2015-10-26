@@ -89,7 +89,7 @@
 						<h2>How</h2>
 						<ul>
 	         				<li>Treat data as a stream of elements</li>
-	         				<li>Asynchronous non-blocking data and demand flows</li>
+	         				<li>Asynchronous non-blocking <em>data</em> and <em>demand</em> flows</li>
 	         				<li>Demand flows <em>upstream</em>, causing data to flow <em>downstream</em></li>
 	          				<li>Data flow is therefore restricted by demand 
 	          					<ul>
@@ -135,6 +135,7 @@
 					<section>
 						<h2>Introducing Akka Streams!!</h2>
 						<h4>Akka's implementation of Reactive Streams</h4>
+						<img src="images/igotthis.jpg"/>
 						</p>
 					</section>
 
@@ -147,7 +148,7 @@
 			         				<li>Each component, or set of componenents can be combined</li>
 		         				</ul>
 			         		<li>Each building block is immutable</li>
-			         		<li>Fully compatible with other Reactive Streams implementations</li>
+			         		<li>Fully compatible with other Reactive Stream implementations</li>
 	          			</ul>
 
 	          			<aside class="notes">
@@ -159,7 +160,19 @@
 					</section>
 
 					<section>
-						<h2>Building blocks</h2>
+						<h2>Building blocks.</h2>
+						<img src="images/akka-streams-components.png"/>
+
+	          			<aside class="notes">
+	          				<ul>
+	          					<li></li>
+	          					<li></li>
+	          				</ul>
+	          			</aside>
+					</section>
+
+					<section>
+						<h2>Building blocks cont...</h2>
 						<ul>
 			         		<li>Source</li>
 			         			<ul>
@@ -219,19 +232,7 @@
 	          					<li></li>
 	          				</ul>
 	          			</aside>
-					</section>
-
-					<section>
-						<h2>Building blocks cont...</h2>
-						<img src="images/akka-streams-components.png"/>
-
-	          			<aside class="notes">
-	          				<ul>
-	          					<li></li>
-	          					<li></li>
-	          				</ul>
-	          			</aside>
-					</section>
+					</section>					
 
 					<section>
 						<h2>Building blocks cont...</h2>
@@ -285,12 +286,12 @@
 						<ul>
 			         		<li>Errors handlied within the stream as normal data elements
 			         			<ul>
-			         				<li>Passed using the onNext function</li>
+			         				<li>Passed using the <code>onNext</code> function</li>
 		         				</ul>
 		         			</li>
 		         			<li>Failure means that the stream itself has failed and is collapsing
 			         			<ul>
-			         				<li>Raises the onError signal... (???)</li>
+			         				<li>Raises the <code>onError</code> signal... (???)</li>
 		         				</ul>
 		         			</li>
 		         			<li>Each block in the flow can choose to absorb or propagate the errors
